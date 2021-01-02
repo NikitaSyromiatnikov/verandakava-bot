@@ -1,0 +1,24 @@
+{
+  "name": "verandakava-bot",
+  "version": "1.0.0",
+  "description": "This is a delivery telegram bot made for Verandakava ",
+  "main": "app.js",
+  "scripts": {
+    "test": "nodemon app.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/NikitaSyromiatnikov/verandakava-bot.git"
+  },
+  "author": "Nikita Syromiatnikov",
+  "license": "UNLICENSED",
+  "bugs": {
+    "url": "https://github.com/NikitaSyromiatnikov/verandakava-bot/issues"
+  },
+  "homepage": "https://github.com/NikitaSyromiatnikov/verandakava-bot#readme",
+  "dependencies": {
+    "sqlite3": "^5.0.0",
+    "telegraf": "^3.38.0",
+    "uuid": "^8.3.2"
+  }
+}
