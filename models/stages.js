@@ -186,8 +186,16 @@ ProductMenuScene.on('callback_query', async function (ctx) {
         case 'tocart':
             return Services.addProductToCart(ctx);
 
+        case 'cart':
+            if (ctx.session.cart)
+                if (ctx.session.cart.length == 0)
+                    return ctx.answerCbQuery(`Спочатку оберіть хоча б один товар`);
+
+            await ctx.answerCbQuery(`Зачекайте...`);
+            return ctx.scene.enter('cart-menu-scene');
+
         default:
-            return ctx.answerCbQuery('Unknown query error!');
+            return ctx.answerCbQuery(`Unknown query error! - ${query.payload}`);
     }
 });
 

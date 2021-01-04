@@ -127,6 +127,9 @@ async function scheduleStatistics(telegram) {
 function sendProductsResponse(ctx) {
     let array = Config.products[`${ctx.update.callback_query.data}`];
 
+    if (ctx.session.cart == undefined)
+        ctx.session.cart = [];
+
     let response = {
         text: array[ctx.session.current].name,
         image: array[ctx.session.current].image,
@@ -134,7 +137,8 @@ function sendProductsResponse(ctx) {
             reply_markup: {
                 inline_keyboard: [
                     [],
-                    [{ text: '⏮', callback_data: 'previous' }, { text: `${ctx.session.current + 1}/${array.length}`, callback_data: 'current' }, { text: '⏭', callback_data: 'next' }]
+                    [{ text: '⏮', callback_data: 'previous' }, { text: `${ctx.session.current + 1}/${array.length}`, callback_data: 'current' }, { text: '⏭', callback_data: 'next' }],
+                    [{ text: `📝 Офомити замовлення (${ctx.session.cart.length})`, callback_data: 'cart' }]
                 ]
             },
             parse_mode: 'HTML'
@@ -158,7 +162,8 @@ function sendOtherProduct(ctx) {
             reply_markup: {
                 inline_keyboard: [
                     [],
-                    [{ text: '⏮', callback_data: 'previous' }, { text: `${ctx.session.current + 1}/${array.length}`, callback_data: 'current' }, { text: '⏭', callback_data: 'next' }]
+                    [{ text: '⏮', callback_data: 'previous' }, { text: `${ctx.session.current + 1}/${array.length}`, callback_data: 'current' }, { text: '⏭', callback_data: 'next' }],
+                    [{ text: `📝 Офомити замовлення (${ctx.session.cart.length})`, callback_data: 'cart' }]
                 ]
             },
             parse_mode: 'HTML'
@@ -173,7 +178,7 @@ function sendOtherProduct(ctx) {
     return ctx.replyWithPhoto({ source: fs.createReadStream(path.resolve(__dirname, '..', 'assets', 'images', 'americano.jpg')) }, { caption: `<b>${array[ctx.session.current].name}</b>`, reply_markup: response.options.reply_markup, parse_mode: 'HTML' });
 }
 
-function addProductToCart(ctx) {
+async function addProductToCart(ctx) {
     let array = String(ctx.update.callback_query.data).split('-');
 
     let query = {
@@ -193,6 +198,19 @@ function addProductToCart(ctx) {
     };
 
     ctx.session.cart.push(product);
+
+    const inline_keyboard = [
+        [],
+        [{ text: '⏮', callback_data: 'previous' }, { text: `${ctx.session.current + 1}/${array.length}`, callback_data: 'current' }, { text: '⏭', callback_data: 'next' }],
+        [{ text: `📝 Офомити замовлення (${ctx.session.cart.length})`, callback_data: 'cart' }]
+    ];
+
+    let array_kb = Config.products[ctx.session.choice];
+
+    for (let i = 0; i < array_kb[ctx.session.current].sizes.length; i++)
+        inline_keyboard[0].push({ text: `${array_kb[ctx.session.current].sizes[i].type} (${array_kb[ctx.session.current].sizes[i].price} грн)`, callback_data: `tocart-${array_kb[ctx.session.current].sizes[i].type}` });
+
+    await ctx.editMessageReplyMarkup({ inline_keyboard });
 
     return ctx.answerCbQuery('Товар додано до кошику!', true);
 }
