@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+const uuid = require('uuid').v4;
 
 const { Config } = require('../config');
 
@@ -25,12 +26,28 @@ async function checkMetadata(ctx) {
     if (ctx.update.message.text) {
         if (String(ctx.update.message.text).includes('accept')) {
             let uuid = String(ctx.update.message.text).replace('/start accept-', '');
-            // let order = await Database.getOrder();
+            let order = await Database.getOrder(uuid);
+
+            if (order == undefined)
+                return 'unknown';
+
+            order.status = 'accepted';
+
+            ctx.telegram.sendMessage(order.user, `🎉 Ура! Ваше засовлення <b>підтверджено</b>, чекайте доставки`, { parse_mode: 'HTML' });
+
+            await Database.updateOrder(order);
             return 'accepted';
         }
 
         if (String(ctx.update.message.text).includes('decline')) {
-            console.log('may be declined');
+            let uuid = String(ctx.update.message.text).replace('/start decline-', '');
+            let order = await Database.getOrder(uuid);
+
+            order.status = 'declined';
+
+            ctx.telegram.sendMessage(order.user, `😢 Ваше засовлення <b>скасовано</b>`, { parse_mode: 'HTML' });
+
+            await Database.updateOrder(order);
             return 'declined';
         }
     }
@@ -71,7 +88,8 @@ function getCartResponse(ctx) {
 
             options.reply_markup.inline_keyboard.push([{ text: 'Підтвердити замовлення', callback_data: 'submit' }]);
 
-            text += `💰 <b><i>Сума: ${sum} грн</i></b>`;
+            text += `💰 <b><i>Сума: ${sum} грн</i></b>\n`;
+            text += `🏃 <b><i>Доставка: ${Config.delivery.price} грн</i></b>`;
 
             return ctx.reply(text, options);
         }
@@ -215,14 +233,14 @@ function requestLocation(ctx) {
     return ctx.reply(response.text, response.options);
 }
 
-function placeOrder(ctx, order) {
+async function placeOrder(ctx, order) {
     let text = `<b>${new Date().toTimeString()}</b>\n\n<i>+${order.user.phone_number} ${order.user.first_name}</i>\n\n`;
     let options = {
         reply_markup: {
             inline_keyboard: [
                 [{ text: '✅ Підтвердити замовлення', url: `t.me/verandakava_bot?start=accept-${order.id}` }],
                 [{ text: '❌ Скасувати замовлення', url: `t.me/verandakava_bot?start=decline-${order.id}` }],
-                [{ text: '📤 Написати клієнту', url: `t.me/${ctx.from.username}` }, { text: '🗺 Maps', url: `https://maps.google.com/maps?q=${order.location.latitude},${order.location.longitude}` }],
+                [{ text: '📤 Написати', url: `t.me/${ctx.from.username}` }, { text: '🗺 Карта', url: `https://maps.google.com/maps?q=${order.location.latitude},${order.location.longitude}` }],
             ]
         },
         parse_mode: 'HTML'
@@ -233,7 +251,116 @@ function placeOrder(ctx, order) {
 
     ctx.session.cart = [];
 
+    await Database.addOrder(order);
     return ctx.telegram.sendMessage(Config.orders.channel.id, text, options);
+}
+
+async function getAccountResponse(ctx) {
+    let user = await Database.getUser(ctx.from.id);
+    let orders = await Database.getUserOrders(ctx.from.id);
+
+    let response = {
+        text: `<b>${user.username || '#' + user.id}</b>\n${new Date(user.date).toDateString()}\n\n`,
+        options: {
+            reply_markup: {
+                inline_keyboard: []
+            },
+            parse_mode: 'HTML'
+        }
+    }
+
+    let status = {
+        pending: '🕐',
+        accepted: '🏃',
+        declined: '❌',
+        completed: '✅'
+    };
+
+    for (let i = 0; i < orders.length; i++)
+        response.options.reply_markup.inline_keyboard.push([{ text: `${status[orders[i].status]} ${new Date(orders[i].date).toDateString()}`, callback_data: `order-${orders[i].id}` }]);
+
+    if (orders.length == 0)
+        response.text += `<i>Ви ще не зробили жодного замовлення</i>`;
+    else
+        response.text += `<i>Список ваших замовлень:</i>`;
+
+    return ctx.reply(response.text, response.options);
+};
+
+async function getOrderDetails(ctx) {
+    await ctx.answerCbQuery('Завантаження...');
+    let id = String(ctx.update.callback_query.data).replace('order-', '');
+    let order = await Database.getOrder(id);
+
+    order.cart = JSON.parse(order.cart_JSON);
+    order.location = JSON.parse(order.location_JSON);
+
+    let sum = 0;
+    let text = `<b>${new Date(order.date).toTimeString()}</b>\n\n<i>+${order.phone} ${order.name}</i>\n\n`;
+    let options = {
+        reply_markup: {
+            inline_keyboard: [
+                [{ text: '🗺 Місце доставки', url: `https://maps.google.com/maps?q=${order.location.latitude},${order.location.longitude}` }],
+                [{ text: '🔄 Повторити замовлення', callback_data: `repeat-${order.id}` }],
+                [{ text: '👻 Приховати', callback_data: 'hide' }],
+            ]
+        },
+        parse_mode: 'HTML'
+    }
+
+    for (let i = 0; i < order.cart.length; i++) {
+        text += `${order.cart[i].name} (${order.cart[i].options.type}) <b>${order.cart[i].options.price} грн</b>\n`
+        sum += order.cart[i].options.price;
+    }
+
+    text += `\n<b>Всього: ${sum} грн</b>\n`;
+
+    return ctx.reply(text, options);
+}
+
+async function repeatOrder(ctx) {
+    let id = String(ctx.update.callback_query.data).replace('repeat-', '');
+    let old_order = await Database.getOrder(id);
+
+    console.log(old_order);
+
+    let order = {
+        id: uuid(),
+        date: new Date().getTime(),
+        user: {
+            user_id: old_order.user,
+            phone_number: old_order.phone,
+            first_name: old_order.name
+        },
+        name: old_order.name,
+        cart: JSON.parse(old_order.cart_JSON),
+        location: JSON.parse(old_order.location_JSON),
+    };
+
+    await Database.addOrder(order);
+
+    let sum = 0;
+    let text = `<b>${new Date().toTimeString()}</b>\n\n<i>+${order.user.phone_number} ${order.user.first_name}</i>\n\n`;
+    let options = {
+        reply_markup: {
+            inline_keyboard: [
+                [{ text: '✅ Підтвердити замовлення', url: `t.me/verandakava_bot?start=accept-${order.id}` }],
+                [{ text: '❌ Скасувати замовлення', url: `t.me/verandakava_bot?start=decline-${order.id}` }],
+                [{ text: '📤 Написати', url: `t.me/${ctx.from.username}` }, { text: '🗺 Карта', url: `https://maps.google.com/maps?q=${order.location.latitude},${order.location.longitude}` }],
+            ]
+        },
+        parse_mode: 'HTML'
+    }
+
+    for (let i = 0; i < order.cart.length; i++) {
+        text += `${order.cart[i].name} (${order.cart[i].options.type}) <b>${order.cart[i].options.price} грн</b>\n`;
+        sum += order.cart[i].options.price;
+    }
+
+    text += `<b>Всього: ${sum} грн</b>\n<b>Доставка: ${Config.delivery.price} грн</b>`;
+
+    await ctx.telegram.sendMessage(Config.orders.channel.id, text, options);
+    return ctx.answerCbQuery(`Замовлено повторно! Чекайте на дзвінок`, true);
 }
 
 module.exports = {
@@ -246,5 +373,8 @@ module.exports = {
     sendProductsResponse,
     requestPhoneNumber,
     requestLocation,
-    placeOrder
+    placeOrder,
+    repeatOrder,
+    getOrderDetails,
+    getAccountResponse
 };

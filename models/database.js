@@ -116,6 +116,52 @@ async function addOrder(order) {
     });
 }
 
+async function getOrder(uuid) {
+    return new Promise(function (resolve, reject) {
+        database.get(`SELECT * FROM "orders" WHERE id = :id`, {
+            ':id': uuid
+        }, function (error, row) {
+            if (error)
+                reject(error);
+
+            resolve(row);
+        });
+    }).catch(function (error) {
+        console.error(error.message);
+    });
+}
+
+async function updateOrder(order) {
+    return new Promise(function (resolve, reject) {
+        database.run(`UPDATE "orders" SET status = :status WHERE id = :id`, {
+            ':id': order.id,
+            ':status': order.status
+        }, function (error) {
+            if (error)
+                reject(error);
+
+            resolve(order);
+        });
+    }).catch(function (error) {
+        console.error(error.message);
+    });
+}
+
+async function getUserOrders(id) {
+    return new Promise(function (resolve, reject) {
+        database.all(`SELECT * FROM "orders" WHERE user = :id`, {
+            ':id': id
+        }, function (error, rows) {
+            if (error)
+                reject(error);
+
+            resolve(rows);
+        });
+    }).catch(function (error) {
+        console.error(error.message);
+    });
+}
+
 module.exports = {
     addUser,
     getUser,
@@ -123,6 +169,7 @@ module.exports = {
     deleteUser,
     countUsers,
     addOrder,
-    // getOrder,
-    // updateOrder,
+    getOrder,
+    updateOrder,
+    getUserOrders,
 }

@@ -44,12 +44,15 @@ const Config = {
         channel: {
             id: -1001490455951
         },
-        timeout: 3600000
+        timeout: 360000
     },
     orders: {
         channel: {
             id: -1001442033120
         }
+    },
+    delivery: {
+        price: 0
     },
     products: {
         coffe: [
@@ -72,25 +75,25 @@ const Config = {
                 ]
             },
             {
-                name: 'Амеркано 1',
+                name: 'Еспресо',
                 image: 'americano.jpg',
                 sizes: [
                     {
                         type: 'S',
-                        price: 15
+                        price: 30
                     },
                     {
-                        type: 'M',
-                        price: 20
+                        type: 'фредо',
+                        price: 25
                     },
                     {
                         type: 'L',
-                        price: 25
+                        price: 40
                     }
                 ]
             },
             {
-                name: 'Амеркано 2',
+                name: 'Лунго',
                 image: 'americano.jpg',
                 sizes: [
                     {

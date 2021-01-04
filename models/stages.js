@@ -59,7 +59,6 @@ MainMenuScene.on('text', async function (ctx) {
 
 CartMenuScene.enter(async function (ctx) {
     await ctx.reply(Reply.onCartMenu.text, Reply.onCartMenu.options);
-
     return Services.getCartResponse(ctx);
 });
 
@@ -98,6 +97,9 @@ CartMenuScene.on('text', async function (ctx) {
 CartMenuScene.on('contact', async function (ctx) {
     if (ctx.from.id == ctx.update.message.contact.user_id) {
         ctx.session.contact = ctx.update.message.contact;
+    } else {
+        await ctx.reply(`🙈 Цей номер телефону не пов'язаний з вашим акаунтом, будь ласка відправте власний`);
+        return Services.requestPhoneNumber(ctx);
     }
 
     return Services.requestLocation(ctx);
@@ -114,7 +116,7 @@ CartMenuScene.on('location', async function (ctx) {
         location: ctx.session.location
     };
 
-    Services.placeOrder(ctx, order);
+    await Services.placeOrder(ctx, order);
 
     await ctx.reply(`Чекайте дзвінка для підтвердження засовлення`);
     return ctx.scene.enter('main-menu-scene');
@@ -187,7 +189,31 @@ ProductMenuScene.on('callback_query', async function (ctx) {
         default:
             return ctx.answerCbQuery('Unknown query error!');
     }
+});
 
+AccountMenuScene.enter(async function (ctx) {
+    await ctx.reply(Reply.onAccountMenu.text, Reply.onAccountMenu.options);
+    return Services.getAccountResponse(ctx);
+});
+
+AccountMenuScene.on('text', async function (ctx) {
+    switch (ctx.update.message.text) {
+        case '◀️ Назад':
+            return ctx.scene.enter('main-menu-scene');
+
+        default:
+            return ctx.reply(Reply.onWrong.text, Reply.onAccountMenu.options);
+    }
+});
+
+AccountMenuScene.on('callback_query', async function (ctx) {
+    if (ctx.update.callback_query.data == 'hide')
+        return ctx.deleteMessage();
+
+    if (String(ctx.update.callback_query.data).includes('repeat'))
+        return Services.repeatOrder(ctx);
+
+    return Services.getOrderDetails(ctx);
 });
 
 Stages.register(
@@ -196,7 +222,7 @@ Stages.register(
     CartMenuScene,      // DONE 50%
     HelpMenuScene,      // DONE 0%
     AdminMenuScene,     // DONE 0%
-    AccountMenuScene,   // DONE 0%
+    AccountMenuScene,   // DONE 99%
     ProductMenuScene    // DONE 99%
 );
 
