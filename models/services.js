@@ -381,6 +381,18 @@ async function repeatOrder(ctx) {
     return ctx.answerCbQuery(`Замовлено повторно! Чекайте на дзвінок`, true);
 }
 
+function showProductDetails(ctx) {
+    let array = String(ctx.update.callback_query.data).split('-');
+    let query = {
+        payload: array[0],
+        data: Number(array[1])
+    };
+
+    let product = ctx.session.cart[query.data];
+
+    return ctx.answerCbQuery(`${product.name} (${product.options.type})\n${product.options.price} грн`, true);
+};
+
 module.exports = {
     registerUser,
     checkMetadata,
@@ -394,5 +406,6 @@ module.exports = {
     placeOrder,
     repeatOrder,
     getOrderDetails,
-    getAccountResponse
+    getAccountResponse,
+    showProductDetails
 };

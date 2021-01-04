@@ -78,6 +78,9 @@ CartMenuScene.on('callback_query', async function (ctx) {
             await ctx.answerCbQuery('Створюю замовлення');
             return Services.requestPhoneNumber(ctx);
 
+        case 'show':
+            return Services.showProductDetails(ctx);
+
         default:
             return ctx.answerCbQuery(`Щось пішло не так`, true);
     }
