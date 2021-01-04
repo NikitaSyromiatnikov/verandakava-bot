@@ -252,6 +252,7 @@ function requestLocation(ctx) {
 }
 
 async function placeOrder(ctx, order) {
+    let sum = 0;
     let text = `<b>${new Date().toTimeString()}</b>\n\n<i>+${order.user.phone_number} ${order.user.first_name}</i>\n\n`;
     let options = {
         reply_markup: {
@@ -259,14 +260,18 @@ async function placeOrder(ctx, order) {
                 [{ text: '✅ Підтвердити замовлення', url: `t.me/verandakava_bot?start=accept-${order.id}` }],
                 [{ text: '❌ Скасувати замовлення', url: `t.me/verandakava_bot?start=decline-${order.id}` }],
                 [{ text: '📤 Написати', url: `t.me/${ctx.from.username}` }, { text: '🗺 Карта', url: `https://maps.google.com/maps?q=${order.location.latitude},${order.location.longitude}` }],
-                [{ text: '📵 Заблокувати к хуям', callback_data: `ban-${ctx.from.id}` }]
+                [{ text: '📵 Заблокувати користувача', callback_data: `ban-${ctx.from.id}` }]
             ]
         },
         parse_mode: 'HTML'
     }
 
-    for (let i = 0; i < order.cart.length; i++)
+    for (let i = 0; i < order.cart.length; i++) {
         text += `${order.cart[i].name} (${order.cart[i].options.type}) <b>${order.cart[i].options.price} грн</b>\n`
+        sum += order.cart[i].options.price;
+    }
+
+    text += `\n<b>Всього: ${sum} грн</b>\n`;
 
     ctx.session.cart = [];
 
@@ -379,7 +384,7 @@ async function repeatOrder(ctx) {
         sum += order.cart[i].options.price;
     }
 
-    text += `<b>Всього: ${sum} грн</b>\n<b>Доставка: ${Config.delivery.price} грн</b>`;
+    text += `\n<b>Всього: ${sum} грн</b>\n<b>Доставка: ${Config.delivery.price} грн</b>`;
 
     await ctx.telegram.sendMessage(Config.orders.channel.id, text, options);
     return ctx.answerCbQuery(`Замовлено повторно! Чекайте на дзвінок`, true);
