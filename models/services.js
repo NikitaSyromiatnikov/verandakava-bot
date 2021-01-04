@@ -259,6 +259,7 @@ async function placeOrder(ctx, order) {
                 [{ text: '✅ Підтвердити замовлення', url: `t.me/verandakava_bot?start=accept-${order.id}` }],
                 [{ text: '❌ Скасувати замовлення', url: `t.me/verandakava_bot?start=decline-${order.id}` }],
                 [{ text: '📤 Написати', url: `t.me/${ctx.from.username}` }, { text: '🗺 Карта', url: `https://maps.google.com/maps?q=${order.location.latitude},${order.location.longitude}` }],
+                [{ text: '📵 Заблокувати к хуям', callback_data: `ban-${ctx.from.id}` }]
             ]
         },
         parse_mode: 'HTML'
@@ -340,7 +341,10 @@ async function repeatOrder(ctx) {
     let id = String(ctx.update.callback_query.data).replace('repeat-', '');
     let old_order = await Database.getOrder(id);
 
-    console.log(old_order);
+    let user = await Database.getUser(ctx.from.id);
+
+    if (user.status == 'banned')
+        return ctx.answerCbQuery('Ви не можете робити замовлення бо були заблоковані');
 
     let order = {
         id: uuid(),

@@ -162,9 +162,26 @@ async function getUserOrders(id) {
     });
 }
 
+async function banUser(id) {
+    return new Promise(function (resolve, reject) {
+        database.run(`UPDATE "users" SET status = :status WHERE id = :id`, {
+            ':id': id,
+            ':status': 'banned'
+        }, function (error) {
+            if (error)
+                reject(error);
+
+            resolve(id);
+        });
+    }).catch(function (error) {
+        console.error(error.message);
+    });
+}
+
 module.exports = {
     addUser,
     getUser,
+    banUser,
     updateUser,
     deleteUser,
     countUsers,

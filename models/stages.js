@@ -75,6 +75,11 @@ CartMenuScene.on('callback_query', async function (ctx) {
             return ctx.scene.enter('product-menu-scene');
 
         case 'submit':
+            let user = await Database.getUser(ctx.from.id);
+
+            if (user.status == 'banned')
+                return ctx.answerCbQuery('Ви не можете робити замовлення бо були заблоковані');
+
             await ctx.answerCbQuery('Створюю замовлення');
             return Services.requestPhoneNumber(ctx);
 
