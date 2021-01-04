@@ -13,7 +13,7 @@ const Reply = {
         }
     },
     onProductMenu: {
-        text: '<b>Шо ти хочеш?</b>',
+        text: '<b>Чого бажаєте?</b>',
         options: {
             reply_markup: {
                 keyboard: [

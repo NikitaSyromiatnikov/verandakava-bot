@@ -86,6 +86,11 @@ CartMenuScene.on('callback_query', async function (ctx) {
         case 'show':
             return Services.showProductDetails(ctx);
 
+        case 'clear':
+            ctx.session.cart = [];
+            await ctx.answerCbQuery(`Готово`);
+            return ctx.scene.enter('main-menu-scene');
+
         default:
             return ctx.answerCbQuery(`Щось пішло не так`, true);
     }
@@ -189,7 +194,7 @@ ProductMenuScene.on('callback_query', async function (ctx) {
             }
 
         case 'current':
-            return ctx.answerCbQuery('Щоб додати товар натисніть кнопку ➕ В кошик', true);
+            return ctx.answerCbQuery('Щоб додати товар натисніть кнопку з бажаним типом продукту S/M/L', true);
 
         case 'tocart':
             return Services.addProductToCart(ctx);

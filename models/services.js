@@ -33,7 +33,7 @@ async function checkMetadata(ctx) {
 
             order.status = 'accepted';
 
-            ctx.telegram.sendMessage(order.user, `🎉 Ура! Ваше засовлення <b>підтверджено</b>, чекайте доставки`, { parse_mode: 'HTML' });
+            ctx.telegram.sendMessage(order.user, `🎉 Ура! Ваше замовлення <b>підтверджено</b>, чекайте доставки`, { parse_mode: 'HTML' });
 
             await Database.updateOrder(order);
             return 'accepted';
@@ -86,6 +86,7 @@ function getCartResponse(ctx) {
                 sum += ctx.session.cart[i].options.price;
             }
 
+            options.reply_markup.inline_keyboard.push([{ text: 'Очистити кошик', callback_data: 'clear' }]);
             options.reply_markup.inline_keyboard.push([{ text: 'Підтвердити замовлення', callback_data: 'submit' }]);
 
             text += `💰 <b><i>Сума: ${sum} грн</i></b>\n`;
@@ -111,7 +112,7 @@ function getCartResponse(ctx) {
 async function scheduleStatistics(telegram) {
     setInterval(async function () {
         let users = await Database.countUsers();
-        let text = `📈 <b>Статистика:</b>\n<b>${new Date().toDateString()} ${new Date().toTimeString()}</b>\n\n<i>В боті зареєстровано ${users['count()']} користувачів</i>`;
+        let text = `📈 <b>Статистика:</b>\n<b>${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}</b>\n\n<i>В боті зареєстровано ${users['count()']} користувачів</i>`;
 
         return telegram.sendMessage(Config.statistics.channel.id, text, {
             reply_markup: {
@@ -201,7 +202,7 @@ async function addProductToCart(ctx) {
 
     const inline_keyboard = [
         [],
-        [{ text: '⏮', callback_data: 'previous' }, { text: `${ctx.session.current + 1}/${array.length}`, callback_data: 'current' }, { text: '⏭', callback_data: 'next' }],
+        [{ text: '⏮', callback_data: 'previous' }, { text: `${ctx.session.current + 1}/${Config.products[ctx.session.choice].length}`, callback_data: 'current' }, { text: '⏭', callback_data: 'next' }],
         [{ text: `📝 Офомити замовлення (${ctx.session.cart.length})`, callback_data: 'cart' }]
     ];
 
@@ -253,7 +254,7 @@ function requestLocation(ctx) {
 
 async function placeOrder(ctx, order) {
     let sum = 0;
-    let text = `<b>${new Date().toTimeString()}</b>\n\n<i>+${order.user.phone_number} ${order.user.first_name}</i>\n\n`;
+    let text = `<b>${new Date().toLocaleTimeString()}</b>\n\n<i>+${order.user.phone_number} ${order.user.first_name}</i>\n\n`;
     let options = {
         reply_markup: {
             inline_keyboard: [
@@ -284,7 +285,7 @@ async function getAccountResponse(ctx) {
     let orders = await Database.getUserOrders(ctx.from.id);
 
     let response = {
-        text: `<b>${user.username || '#' + user.id}</b>\n${new Date(user.date).toDateString()}\n\n`,
+        text: `<b>${user.username || '#' + user.id}</b>\n${new Date(user.date).toLocaleDateString()}\n\n`,
         options: {
             reply_markup: {
                 inline_keyboard: []
@@ -301,7 +302,7 @@ async function getAccountResponse(ctx) {
     };
 
     for (let i = 0; i < orders.length; i++)
-        response.options.reply_markup.inline_keyboard.push([{ text: `${status[orders[i].status]} ${new Date(orders[i].date).toDateString()}`, callback_data: `order-${orders[i].id}` }]);
+        response.options.reply_markup.inline_keyboard.push([{ text: `${status[orders[i].status]} ${new Date(orders[i].date).toLocaleDateString()}`, callback_data: `order-${orders[i].id}` }]);
 
     if (orders.length == 0)
         response.text += `<i>Ви ще не зробили жодного замовлення</i>`;
@@ -320,7 +321,7 @@ async function getOrderDetails(ctx) {
     order.location = JSON.parse(order.location_JSON);
 
     let sum = 0;
-    let text = `<b>${new Date(order.date).toTimeString()}</b>\n\n<i>+${order.phone} ${order.name}</i>\n\n`;
+    let text = `<b>${new Date(order.date).toLocaleTimeString()}</b>\n\n<i>+${order.phone} ${order.name}</i>\n\n`;
     let options = {
         reply_markup: {
             inline_keyboard: [
@@ -367,7 +368,7 @@ async function repeatOrder(ctx) {
     await Database.addOrder(order);
 
     let sum = 0;
-    let text = `<b>${new Date().toTimeString()}</b>\n\n<i>+${order.user.phone_number} ${order.user.first_name}</i>\n\n`;
+    let text = `<b>${new Date().toLocaleTimeString()}</b>\n\n<i>+${order.user.phone_number} ${order.user.first_name}</i>\n\n`;
     let options = {
         reply_markup: {
             inline_keyboard: [

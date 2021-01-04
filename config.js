@@ -44,7 +44,7 @@ const Config = {
         channel: {
             id: -1001490455951
         },
-        timeout: 60000
+        timeout: 3600000
     },
     orders: {
         channel: {
