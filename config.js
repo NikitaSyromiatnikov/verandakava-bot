@@ -1,7 +1,6 @@
 const Config = {
     bot: {
-        // token: '1408540427:AAG59xmYctTOKiOlzjq4AGObpeKifg4D4VU',
-        token: '1080671811:AAEwheHogz37SaNWPimpfoHs71eaaE9dss0',
+        token: '1408540427:AAG59xmYctTOKiOlzjq4AGObpeKifg4D4VU',
         owners: [
             298784500,
             455387394
