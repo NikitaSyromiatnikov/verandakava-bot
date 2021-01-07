@@ -28,7 +28,11 @@ Bot.on('callback_query', async function (ctx) {
             return ctx.answerCbQuery('👌 Користувач заблокований', true);
 
         default:
-            return ctx.answerCbQuery('Сталася помилка...');
+            try {
+                ctx.answerCbQuery('Сталася помилка...');
+            } catch (error) {
+                console.log(error);
+            }
     }
 });
 

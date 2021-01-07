@@ -7,6 +7,7 @@ const Services = require('./services');
 
 const { Reply } = require('./replies');
 const { Config } = require('../config');
+const { Products } = require('../data/products');
 
 const Stages = new Stage();
 
@@ -138,7 +139,7 @@ CartMenuScene.on('location', async function (ctx) {
 ProductMenuScene.enter(async function (ctx) {
     await ctx.reply(Reply.onProductMenu.text, Reply.onProductMenu.options);
 
-    ctx.session.products = Config.products;
+    ctx.session.products = Products;
     ctx.session.current = 0;
 
     let response = {

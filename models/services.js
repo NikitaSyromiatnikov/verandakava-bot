@@ -3,6 +3,7 @@ const path = require('path');
 const uuid = require('uuid').v4;
 
 const { Config } = require('../config');
+const { Products } = require('../data/products');
 
 const Database = require('./database');
 
@@ -126,14 +127,13 @@ async function scheduleStatistics(telegram) {
 }
 
 function sendProductsResponse(ctx) {
-    let array = Config.products[`${ctx.update.callback_query.data}`];
+    let array = Products[ctx.update.callback_query.data];
 
     if (ctx.session.cart == undefined)
         ctx.session.cart = [];
 
     let response = {
-        text: array[ctx.session.current].name,
-        image: array[ctx.session.current].image,
+        text: `<b>${array[ctx.session.current].name}</b>\n\n<i>${array[ctx.session.current].description}</i>`,
         options: {
             reply_markup: {
                 inline_keyboard: [
@@ -150,15 +150,14 @@ function sendProductsResponse(ctx) {
         response.options.reply_markup.inline_keyboard[0].push({ text: `${array[ctx.session.current].sizes[i].type} (${array[ctx.session.current].sizes[i].price} грн)`, callback_data: `tocart-${array[ctx.session.current].sizes[i].type}` });
     }
 
-    return ctx.replyWithPhoto({ source: fs.createReadStream(path.resolve(__dirname, '..', 'assets', 'images', 'americano.jpg')) }, { caption: `<b>${array[ctx.session.current].name}</b>`, reply_markup: response.options.reply_markup, parse_mode: 'HTML' });
+    return ctx.reply(response.text, response.options);
 }
 
 function sendOtherProduct(ctx) {
-    let array = Config.products[`${ctx.session.choice}`];
+    let array = Products[ctx.session.choice];
 
     let response = {
-        text: array[ctx.session.current].name,
-        image: array[ctx.session.current].image,
+        text: `<b>${array[ctx.session.current].name}</b>\n\n<i>${array[ctx.session.current].description}</i>`,
         options: {
             reply_markup: {
                 inline_keyboard: [
@@ -176,7 +175,7 @@ function sendOtherProduct(ctx) {
     }
 
     ctx.deleteMessage();
-    return ctx.replyWithPhoto({ source: fs.createReadStream(path.resolve(__dirname, '..', 'assets', 'images', 'americano.jpg')) }, { caption: `<b>${array[ctx.session.current].name}</b>`, reply_markup: response.options.reply_markup, parse_mode: 'HTML' });
+    return ctx.reply(response.text, response.options);
 }
 
 async function addProductToCart(ctx) {
@@ -193,20 +192,23 @@ async function addProductToCart(ctx) {
     let product = {
         name: ctx.session.products[ctx.session.choice][ctx.session.current].name,
         options: ctx.session.products[ctx.session.choice][ctx.session.current].sizes.find(function (item) {
-            if (item.type == query.data)
-                return item.price;
-        })
+            if (item.type == query.data) {
+                return item;
+            }
+        }),
     };
+
+    console.log(product);
 
     ctx.session.cart.push(product);
 
     const inline_keyboard = [
         [],
-        [{ text: '⏮', callback_data: 'previous' }, { text: `${ctx.session.current + 1}/${Config.products[ctx.session.choice].length}`, callback_data: 'current' }, { text: '⏭', callback_data: 'next' }],
+        [{ text: '⏮', callback_data: 'previous' }, { text: `${ctx.session.current + 1}/${Products[ctx.session.choice].length}`, callback_data: 'current' }, { text: '⏭', callback_data: 'next' }],
         [{ text: `📝 Офомити замовлення (${ctx.session.cart.length})`, callback_data: 'cart' }]
     ];
 
-    let array_kb = Config.products[ctx.session.choice];
+    let array_kb = Products[ctx.session.choice];
 
     for (let i = 0; i < array_kb[ctx.session.current].sizes.length; i++)
         inline_keyboard[0].push({ text: `${array_kb[ctx.session.current].sizes[i].type} (${array_kb[ctx.session.current].sizes[i].price} грн)`, callback_data: `tocart-${array_kb[ctx.session.current].sizes[i].type}` });
