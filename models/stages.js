@@ -132,31 +132,32 @@ CartMenuScene.on('location', async function (ctx) {
 
     await Services.placeOrder(ctx, order);
 
-    await ctx.reply(`Чекайте дзвінка для підтвердження засовлення`);
+    await ctx.reply(`Чекайте дзвінка для підтвердження замовлення`);
     return ctx.scene.enter('main-menu-scene');
 });
 
 ProductMenuScene.enter(async function (ctx) {
     await ctx.reply(Reply.onProductMenu.text, Reply.onProductMenu.options);
+    await ctx.reply(Reply.onCallMe.text, Reply.onCallMe.options);
 
     ctx.session.products = Products;
     ctx.session.current = 0;
 
-    let response = {
-        text: '🥣 <b>Оберіть категорію:</b>',
-        options: {
-            reply_markup: {
-                inline_keyboard: [
-                    [{ text: '☕️ Кава', callback_data: 'coffe' }],
-                    [{ text: '⁉️ Цікава', callback_data: 'interesting' }],
-                    [{ text: '🥙 Некава', callback_data: 'food' }]
-                ]
-            },
-            parse_mode: 'HTML'
-        }
-    }
+    // let response = {
+    //     text: '🥣 <b>Оберіть категорію:</b>',
+    //     options: {
+    //         reply_markup: {
+    //             inline_keyboard: [
+    //                 [{ text: '☕️ Кава', callback_data: 'coffe' }],
+    //                 [{ text: '⁉️ Цікава', callback_data: 'interesting' }],
+    //                 [{ text: '🥙 Некава', callback_data: 'food' }]
+    //             ]
+    //         },
+    //         parse_mode: 'HTML'
+    //     }
+    // }
 
-    return ctx.reply(response.text, response.options);
+    // return ctx.reply(response.text, response.options);
 });
 
 ProductMenuScene.on('callback_query', async function (ctx) {
@@ -208,9 +209,66 @@ ProductMenuScene.on('callback_query', async function (ctx) {
             await ctx.answerCbQuery(`Зачекайте...`);
             return ctx.scene.enter('cart-menu-scene');
 
+        case 'callme':
+            let call_me = {
+                name: 'Дзвінок',
+                options: {
+                    type: 'консультація',
+                    price: 0
+                }
+            }
+
+            ctx.session.cart = [];
+            ctx.session.cart.push(call_me);
+
+            await ctx.deleteMessage();
+            return Services.requestPhoneNumber(ctx);
+
+        case 'pissof':
+            await ctx.deleteMessage();
+            let response = {
+                text: '🥣 <b>Оберіть категорію:</b>',
+                options: {
+                    reply_markup: {
+                        inline_keyboard: [
+                            [{ text: '☕️ Кава', callback_data: 'coffe' }],
+                            [{ text: '⁉️ Цікава', callback_data: 'interesting' }],
+                            [{ text: '🥙 Некава', callback_data: 'food' }]
+                        ]
+                    },
+                    parse_mode: 'HTML'
+                }
+            }
+
+            return ctx.reply(response.text, response.options);
+
         default:
             return ctx.answerCbQuery(`Unknown query error! - ${query.payload}`);
     }
+});
+
+ProductMenuScene.on('contact', async function (ctx) {
+    if (ctx.from.id == ctx.update.message.contact.user_id) {
+        ctx.session.contact = ctx.update.message.contact;
+    } else {
+        await ctx.reply(`🙈 Цей номер телефону не пов'язаний з вашим акаунтом, будь ласка відправте власний`);
+        return Services.requestPhoneNumber(ctx);
+    }
+
+    let order = {
+        id: uuid(),
+        date: new Date().getTime(),
+        user: ctx.session.contact,
+        cart: ctx.session.cart,
+        location: {
+            latitude: 0.1,
+            longitude: 1.2,
+        }
+    };
+
+    await Services.placeOrder(ctx, order);
+    await ctx.reply('Ми скоро вам зателефонуємо');
+    return ctx.scene.enter('main-menu-scene');
 });
 
 AccountMenuScene.enter(async function (ctx) {
