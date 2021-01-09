@@ -170,8 +170,42 @@ ProductMenuScene.on('callback_query', async function (ctx) {
 
     switch (query.payload) {
         case 'coffe':
+            await ctx.deleteMessage();
+            return ctx.reply(`☕️ <b>Кава</b>`, {
+                reply_markup: {
+                    inline_keyboard: [
+                        [{ text: 'Чорна', callback_data: 'black' }],
+                        [{ text: 'Біла', callback_data: 'white' }],
+                        [{ text: 'Цікава', callback_data: 'smart' }],
+                        [{ text: 'Вагова', callback_data: 'weight' }],
+                        [{ text: '◀️ Назад', callback_data: 'sendmainoptions' }]
+                    ]
+                },
+                parse_mode: 'HTML'
+            });
+
         case 'food':
-        case 'interesting':
+            await ctx.deleteMessage();
+            return ctx.reply(`🥙 <b>Їжа</b>`, {
+                reply_markup: {
+                    inline_keyboard: [
+                        [{ text: 'Солоне', callback_data: 'salty' }],
+                        [{ text: 'Домашні випічка/кондитерка', callback_data: 'bakery' }],
+                        [{ text: 'Снеки', callback_data: 'snacks' }],
+                        [{ text: '◀️ Назад', callback_data: 'sendmainoptions' }]
+                    ]
+                },
+                parse_mode: 'HTML'
+            });
+
+        case 'smart':
+        case 'black':
+        case 'white':
+        case 'weight':
+        case 'drinks':
+        case 'salty':
+        case 'bakery':
+        case 'snacks':
             ctx.session.choice = ctx.update.callback_query.data;
             return Services.sendProductsResponse(ctx);
 
@@ -225,6 +259,7 @@ ProductMenuScene.on('callback_query', async function (ctx) {
             return Services.requestPhoneNumber(ctx);
 
         case 'pissof':
+        case 'sendmainoptions':
             await ctx.deleteMessage();
             let response = {
                 text: '🥣 <b>Оберіть категорію:</b>',
@@ -232,8 +267,8 @@ ProductMenuScene.on('callback_query', async function (ctx) {
                     reply_markup: {
                         inline_keyboard: [
                             [{ text: '☕️ Кава', callback_data: 'coffe' }],
-                            [{ text: '⁉️ Цікава', callback_data: 'interesting' }],
-                            [{ text: '🥙 Некава', callback_data: 'food' }]
+                            [{ text: '🍵 Некава', callback_data: 'drinks' }],
+                            [{ text: '🥙 Їжа', callback_data: 'food' }],
                         ]
                     },
                     parse_mode: 'HTML'
