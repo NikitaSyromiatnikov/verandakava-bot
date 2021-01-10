@@ -198,8 +198,6 @@ async function addProductToCart(ctx) {
         }),
     };
 
-    console.log(product);
-
     ctx.session.cart.push(product);
 
     const inline_keyboard = [

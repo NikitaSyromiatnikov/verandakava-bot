@@ -81,6 +81,19 @@ CartMenuScene.on('callback_query', async function (ctx) {
             if (user.status == 'banned')
                 return ctx.answerCbQuery('Ви не можете робити замовлення бо були заблоковані');
 
+            let consult = false;
+            let price = 0;
+
+            for (let i = 0; i < ctx.session.cart.length; i++) {
+                price += ctx.session.cart[i].options.price
+
+                if (ctx.session.cart[i].options.type == 'консультація' || ctx.session.cart[i].options.price == 0)
+                    consult = true;
+            }
+
+            if (consult == false && price < Config.minOrderPrice)
+                return ctx.answerCbQuery('Мінімальна сума замовлення 60 грн', true);
+
             await ctx.answerCbQuery('Створюю замовлення');
             return Services.requestPhoneNumber(ctx);
 
@@ -142,22 +155,6 @@ ProductMenuScene.enter(async function (ctx) {
 
     ctx.session.products = Products;
     ctx.session.current = 0;
-
-    // let response = {
-    //     text: '🥣 <b>Оберіть категорію:</b>',
-    //     options: {
-    //         reply_markup: {
-    //             inline_keyboard: [
-    //                 [{ text: '☕️ Кава', callback_data: 'coffe' }],
-    //                 [{ text: '⁉️ Цікава', callback_data: 'interesting' }],
-    //                 [{ text: '🥙 Некава', callback_data: 'food' }]
-    //             ]
-    //         },
-    //         parse_mode: 'HTML'
-    //     }
-    // }
-
-    // return ctx.reply(response.text, response.options);
 });
 
 ProductMenuScene.on('callback_query', async function (ctx) {
