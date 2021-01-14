@@ -52,9 +52,14 @@ const Config = {
         }
     },
     delivery: {
-        price: 0
+        price: 0,
+        radius: 0.5
     },
-    minOrderPrice: 60
+    minOrderPrice: 60,
+    place: {
+        latitude: 50.5937709, // широта
+        longitude: 32.3864511 // долгота
+    }
 };
 
 module.exports = { Config };

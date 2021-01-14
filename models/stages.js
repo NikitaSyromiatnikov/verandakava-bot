@@ -135,6 +135,21 @@ CartMenuScene.on('contact', async function (ctx) {
 CartMenuScene.on('location', async function (ctx) {
     ctx.session.location = ctx.update.message.location;
 
+    let distance = 0;
+
+    var R = 6371;
+    var dLat = deg2rad(ctx.session.location.latitude - Config.place.latitude);  // deg2rad below
+    var dLon = deg2rad(ctx.session.location.longitude - Config.place.longitude);
+    var a = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(deg2rad(Config.place.latitude)) * Math.cos(deg2rad(ctx.session.location.latitude)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+    distance = R * c; // Distance in km
+
+    console.log(distance);
+
+    if (distance > Config.delivery.radius)
+        return ctx.reply(`Упс, занадто далеко, кава буде холодною!`);
+
     let order = {
         id: uuid(),
         date: new Date().getTime(),
@@ -148,6 +163,10 @@ CartMenuScene.on('location', async function (ctx) {
     await ctx.reply(`Чекайте дзвінка для підтвердження замовлення`);
     return ctx.scene.enter('main-menu-scene');
 });
+
+function deg2rad(deg) {
+    return deg * (Math.PI / 180)
+}
 
 ProductMenuScene.enter(async function (ctx) {
     await ctx.reply(Reply.onProductMenu.text, Reply.onProductMenu.options);
