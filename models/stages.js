@@ -32,7 +32,11 @@ StartScene.enter(async function (ctx) {
 });
 
 MainMenuScene.enter(async function (ctx) {
-    return ctx.reply(Reply.onMainMenu.text, Reply.onMainMenu.options);
+    try {
+        await ctx.reply(Reply.onMainMenu.text, Reply.onMainMenu.options);
+    } catch (error) {
+        console.log(error);
+    }
 });
 
 MainMenuScene.on('text', async function (ctx) {

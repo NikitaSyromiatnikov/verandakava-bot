@@ -1,8 +1,18 @@
 const { Telegraf, session } = require('telegraf');
-const prod = require('./prod.json');
+const { Config } = require('./config');
+
+const Services = require('./models/services');
 
 const Bot = new Telegraf(prod.token);
 
-Bot.launch().then(function (ctx) {
-    
+Bot.on('text', async function (ctx) {
+
 });
+
+Bot.on('callback_query', async function (ctx) {
+
+});
+
+Bot.launch().then(function (ctx) {
+
+}); 
